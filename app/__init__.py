@@ -1,0 +1,1 @@
+# SoundCare Backend Application
