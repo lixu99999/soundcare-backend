@@ -9,6 +9,8 @@ import requests
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel
 
+from app.core.config import settings
+
 
 class SunoMusicGenerateRequest(BaseModel):
     """Suno 音乐生成请求"""
@@ -49,7 +51,7 @@ class SunoService:
 
     def __init__(self):
         self.base_url = "https://api.sunoapi.org/api/v1"
-        self.api_key = os.getenv("SUNO_API_KEY")
+        self.api_key = settings.SUNO_API_KEY
         self._headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"

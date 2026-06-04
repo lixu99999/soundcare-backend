@@ -8,6 +8,8 @@ import requests
 from typing import Optional, Dict, Any
 from pydantic import BaseModel
 
+from app.core.config import settings
+
 
 class MiniMaxApiRequest(BaseModel):
     """MiniMax API请求（内部使用）"""
@@ -44,7 +46,7 @@ class MiniMaxService:
 
     def __init__(self):
         self.base_url = "https://api.minimaxi.com"
-        self.api_key = os.getenv("MINIMAX_API_KEY")
+        self.api_key = settings.MINIMAX_API_KEY
         self.model = "music-2.6"
         self.free_model = "music-2.6-free"
 
