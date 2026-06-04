@@ -95,7 +95,7 @@ class MiniMaxService:
                 url,
                 json=payload,
                 headers=self._get_headers(),
-                timeout=120
+                timeout=300  # 音乐生成可能需要较长时间
             )
             result = response.json()
 
@@ -155,7 +155,7 @@ class MiniMaxService:
                 url,
                 json=payload,
                 headers=self._get_headers(),
-                timeout=120
+                timeout=300  # 音乐生成可能需要较长时间
             )
             result = response.json()
 

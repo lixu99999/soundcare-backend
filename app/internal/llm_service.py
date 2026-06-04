@@ -9,6 +9,8 @@ import re
 from typing import Optional
 from pydantic import BaseModel
 
+from app.core.config import settings
+
 
 class LLMOptimizeRequest(BaseModel):
     user_input: str  # 用户自然语言输入
@@ -34,8 +36,8 @@ SCENE_CONFIGS = {
 
 class LLMService:
     def __init__(self):
-        self.provider = os.getenv("LLM_PROVIDER", "openai").lower()
-        self.api_key = os.getenv("MINIMAX_API_KEY") if self.provider == "openai" else os.getenv("GEMINI_API_KEY")
+        self.provider = settings.LLM_PROVIDER.lower()
+        self.api_key = settings.GEMINI_API_KEY if self.provider == "gemini" else settings.MINIMAX_API_KEY
 
     def _call_openai(self, system_prompt: str, user_prompt: str) -> str:
         from openai import OpenAI
