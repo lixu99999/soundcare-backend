@@ -12,7 +12,11 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql://user:password@localhost:5432/soundcare"
 
     # CORS
-    CORS_ORIGINS: list = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    CORS_ORIGINS: list = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://soundcare.collegegenerator.cn",
+    ]
 
     # Music Generation
     SUNO_API_KEY: Optional[str] = None
