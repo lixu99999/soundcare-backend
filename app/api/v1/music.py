@@ -138,6 +138,7 @@ async def generate_music(request: MusicGenerateRequest, db: Session = Depends(ge
     cover_image_url = None
     if provider == "suno":
         try:
+            print(f"[DEBUG] provider=suno, prompt length={len(prompt)}")
             # If optimized_prompt is provided (from LLM), use custom_mode for longer prompts
             if request.optimized_prompt and request.optimized_prompt.strip():
                 suno_request = SunoRequest(
@@ -158,7 +159,10 @@ async def generate_music(request: MusicGenerateRequest, db: Session = Depends(ge
             music_title = result.title
             cover_image_url = result.image_url
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Suno generation failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            print(f"[ERROR] Suno generation failed: {type(e).__name__}: {e}", flush=True)
+            raise HTTPException(status_code=500, detail=f"Suno generation failed: {type(e).__name__}: {e}")
     else:
         # Default to MiniMax
         try:
@@ -171,9 +175,15 @@ async def generate_music(request: MusicGenerateRequest, db: Session = Depends(ge
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"MiniMax generation failed: {str(e)}")
 
+    if not music_url:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Music provider returned no audio URL: provider={provider}, title={music_title}",
+        )
+
     response = MusicGenerateResponse(
         session_id=session_id,
-        music_url=music_url or f"https://cdn.soundcare.com/music/{session_id}.mp3",
+        music_url=music_url,
         duration=duration,
         music_title=music_title,
         cover_image_url=cover_image_url,

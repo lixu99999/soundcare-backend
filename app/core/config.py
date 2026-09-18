@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     LLM_PROVIDER: str = "openai"
     GEMINI_API_KEY: Optional[str] = None
 
-    # Default Music Provider: "minimax" or "suno"
-    DEFAULT_MUSIC_PROVIDER: str = "minimax"
+    # Default Music Provider: "suno" or "minimax" (project moved to Suno 2026)
+    DEFAULT_MUSIC_PROVIDER: str = "suno"
 
     class Config:
         env_file = ".env"

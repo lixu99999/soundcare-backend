@@ -6,6 +6,8 @@ Suno API Service - Suno 音乐生成 API 集成
 import os
 import time
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel
 
@@ -19,17 +21,17 @@ class SunoMusicGenerateRequest(BaseModel):
     style: Optional[str] = None  # 风格描述（customMode=true时必填）
     title: Optional[str] = None  # 歌曲标题
     instrumental: bool = True  # 是否为纯音乐（必填）
-    model: str = "V4_5ALL"  # 模型版本
+    model: str = "V6"  # 模型版本（V6 是 2026 默认；V4_5ALL 已 deprecated）
     callback_url: Optional[str] = None  # 回调地址
 
 
 class SunoMusicResult(BaseModel):
     """Suno 音乐生成结果"""
     task_id: str
-    status: str  # TEXT_SUCCESS / PENDING / FAILED / TIMEOUT
+    status: str  # PENDING / TEXT_SUCCESS / SUCCESS / FAILED
     audio_url: Optional[str] = None
     title: Optional[str] = None
-    duration: Optional[int] = None  # 秒
+    duration: Optional[float] = None  # 秒（Suno 返回小数，如 137.92）
     image_url: Optional[str] = None  # 封面图URL
     message: str
 
@@ -56,6 +58,18 @@ class SunoService:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
+        # 带重试的 session：对付 Windows 上偶发的 TLS ConnectionResetError (10054)
+        retry_cfg = Retry(
+            total=4,
+            backoff_factor=1.5,  # 1.5s, 3s, 4.5s, 6s
+            status_forcelist=[502, 503, 504],
+            allowed_methods=["GET", "POST"],
+            raise_on_status=False,
+        )
+        adapter = HTTPAdapter(max_retries=retry_cfg, pool_connections=10, pool_maxsize=10)
+        self._session = requests.Session()
+        self._session.mount("https://", adapter)
+        self._session.mount("http://", adapter)
 
     def _check_api_key(self) -> bool:
         """检查 API Key 是否配置"""
@@ -64,9 +78,10 @@ class SunoService:
         return True
 
     def _request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
-        """发送请求的通用方法"""
+        """发送请求的通用方法（带连接重试，扛 Windows 偶发 RST）"""
         url = f"{self.base_url}{endpoint}"
-        response = requests.request(method, url, headers=self._headers, **kwargs)
+        kwargs.setdefault("timeout", 60)
+        response = self._session.request(method, url, headers=self._headers, **kwargs)
         result = response.json()
 
         if isinstance(result, dict) and result.get("code") != 200:
@@ -152,23 +167,23 @@ class SunoService:
             status_data = self.get_music_status(task_id)
             status = status_data.get("status")
 
-            # 成功状态是 TEXT_SUCCESS
-            if status == "TEXT_SUCCESS":
+            # 成功状态是 SUCCESS（2026 新版；老版本叫 TEXT_SUCCESS）
+            if status == "SUCCESS":
                 suno_data = status_data.get("response", {}).get("sunoData", [])
                 if suno_data:
-                    audio_url = suno_data[0].get("streamAudioUrl") or suno_data[0].get("audioUrl")
+                    audio_url = suno_data[0].get("audio_url") or suno_data[0].get("stream_audio_url")
                     return SunoMusicResult(
                         task_id=task_id,
-                        status="TEXT_SUCCESS",
+                        status="SUCCESS",
                         audio_url=audio_url,
                         title=suno_data[0].get("title"),
-                        duration=suno_data[0].get("audioDuration"),
+                        duration=suno_data[0].get("duration"),
                         message="音乐生成成功",
-                        image_url=suno_data[0].get("imageUrl")
+                        image_url=suno_data[0].get("image_url")
                     )
                 return SunoMusicResult(
                     task_id=task_id,
-                    status="TEXT_SUCCESS",
+                    status="SUCCESS",
                     message="音乐生成成功但无音频数据"
                 )
             elif status == "FAILED":

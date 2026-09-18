@@ -46,7 +46,7 @@ class LLMService:
             base_url="https://api.minimaxi.com/v1"
         )
         response = client.chat.completions.create(
-            model="MiniMax-M2.7",
+            model="MiniMax-M3",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}

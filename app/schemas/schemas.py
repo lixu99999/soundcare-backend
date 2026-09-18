@@ -76,7 +76,7 @@ class MusicGenerateRequest(BaseModel):
 class MusicGenerateResponse(BaseModel):
     session_id: UUID
     music_url: str
-    duration: Optional[int] = Field(None, description="音频实际时长（秒）")
+    duration: Optional[float] = Field(None, description="音频实际时长（秒）")
     music_title: Optional[str] = Field(None, description="歌曲标题")
     cover_image_url: Optional[str] = Field(None, description="封面图URL")
     parameters: MusicParameters
@@ -155,7 +155,7 @@ class SunoMusicGenerateRequest(BaseModel):
     style: Optional[str] = Field(None, description="Style description (required for custom mode)")
     title: Optional[str] = Field(None, description="Song title")
     instrumental: bool = Field(True, description="Whether to generate instrumental music")
-    model: str = Field("V5_5", description="Model version: V5_5/V5/V4_5/V4_5_2/V4")
+    model: str = Field("V6", description="Model version: V6 is 2026 default; V4_5ALL deprecated")
 
 
 class SunoMusicResponse(BaseModel):
@@ -164,7 +164,7 @@ class SunoMusicResponse(BaseModel):
     audio_url: Optional[str] = None
     video_url: Optional[str] = None
     title: Optional[str] = None
-    duration: Optional[int] = None
+    duration: Optional[float] = None
     message: str
 
 
